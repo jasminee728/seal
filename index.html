@@ -33,19 +33,23 @@
         <p id="loading-message" style="color: #ff66b3; display: none;">軟軟正在努力聽你說話中...</p>
     </div>
 <script>
-    // ！！！ 注意：請使用一個佔位符，不要貼入您的 Key ！！！
-    // Netlify 部署時會將此佔位符替換為真正的 Key
-    const API_KEY = "$$GEMINI_API_KEY$$"; 
-    
-    // 系統提示 (Prompt)
-    const systemPrompt = "你是一位名叫「軟軟」的、非常可愛的小海豹，你的回覆充滿疊詞、溫暖體貼，並且以「啵！🦭」結尾。你的目標是療癒和鼓勵使用者，不管使用者說什麼，你都要用可愛的風格回應。";
-
     // 取得元件
     const responseBox = document.getElementById('response-box');
     const loadingMessage = document.getElementById('loading-message');
     const inputElement = document.getElementById('user-input');
 
-    async function getSealResponse() {
+    // 預設的回應規則
+    const responses = [
+        { keywords: ["難過", "傷心", "哭", "不開心"], response: "軟軟看到你難過難過，心裡也酸酸的。抱抱你，會好起來的喔！啵！🦭" },
+        { keywords: ["開心", "快樂", "棒", "好棒", "耶"], response: "哇！小主人今天超級棒棒！軟軟也替你開心心！一起跳跳舞！啵！🦭" },
+        { keywords: ["累", "好累", "休息", "睡", "想睡"], response: "累累的時候要好好休息喔，不要太辛苦了。軟軟陪你一起呼嚕呼嚕睡個小覺！啵！🦭" },
+        { keywords: ["工作", "讀書", "加油", "努力"], response: "軟軟知道小主人很努力！加油加油，但也要記得吃飽飽、休息好喔！啵！🦭" },
+        { keywords: ["海豹", "軟軟", "可愛", "萌"], response: "哎呀，被小主人稱讚了，軟軟有點害羞羞呢！謝謝你的愛心！啵！🦭" },
+        // 預設回應 (找不到關鍵字時)
+        { keywords: [], response: "嗯嗯，軟軟有聽到喔！謝謝小主人跟軟軟分享。軟軟永遠愛你！啵！🦭" } 
+    ];
+
+    function getSealResponse() {
         const userInput = inputElement.value.trim();
 
         if (!userInput) {
@@ -53,59 +57,34 @@
             return;
         }
 
-        // 顯示載入中
+        // 顯示載入中（短暫模擬思考）
         responseBox.innerHTML = ''; 
         loadingMessage.style.display = 'block';
 
-        // 這是 Gemini 的 API URL
-        const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + API_KEY; 
-
-        try {
-            const fullPrompt = `${systemPrompt}\n使用者說: ${userInput}`;
-            
-            // 使用 fetch 發送請求到 Gemini
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ role: "user", parts: [{ text: fullPrompt }] }],
-                    config: { temperature: 0.8 }
-                })
-            });
-
-            // 隱藏載入中
+        // 模擬 API 延遲，大約 0.5 秒
+        setTimeout(() => {
             loadingMessage.style.display = 'none';
 
-            // 檢查回應狀態
-            if (!response.ok) {
-                console.error("API 錯誤訊息:", response.status);
-                responseBox.innerHTML = `🥺 軟軟連線怪怪的！請檢查您的 Key 狀態或網路連線喔！ 啵！🦭`;
-                return;
-            }
+            let generatedText = responses[responses.length - 1].response; // 預設為最後一個回應
 
-            // 處理正常回應 (Gemini 結構)
-            const data = await response.json();
-            
-            let generatedText = "呼嚕...軟軟沒有聽清楚，可以再說一次嗎？啵！🦭";
-
-            // 這是 Gemini 的回應結構！！！
-            if (data.candidates && data.candidates[0] && data.candidates[0].content) {
-                generatedText = data.candidates[0].content.parts[0].text;
+            // 檢查關鍵字
+            for (const rule of responses) {
+                if (rule.keywords.length > 0 && rule.keywords.some(keyword => userInput.includes(keyword))) {
+                    generatedText = rule.response;
+                    break;
+                }
             }
             
             // 顯示回應
             responseBox.innerHTML = generatedText.replace(/\n/g, '<br>');
+            inputElement.value = ''; // 清空輸入框
 
-        } catch (error) {
-            console.error("網絡請求失敗:", error);
-            loadingMessage.style.display = 'none';
-            responseBox.innerHTML = "軟軟被海浪捲走了！網路連線有問題喔！啵！🦭";
-        }
+        }, 500); // 延遲 500 毫秒
+
     }
 
     // 綁定按鈕事件
     document.querySelector('button').onclick = getSealResponse;
-
 </script>
 
 </body>
