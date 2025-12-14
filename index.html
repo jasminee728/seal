@@ -32,11 +32,11 @@
         </div>
         <p id="loading-message" style="color: #ff66b3; display: none;">軟軟正在努力聽你說話中...</p>
     </div>
-
-    <script>
-    // 1. 確保將您的 OpenAI Key 貼在這裡 (sk-proj-開頭)
-    const API_KEY = "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"; 
-
+<script>
+    // ！！！ 注意：請使用一個佔位符，不要貼入您的 Key ！！！
+    // Netlify 部署時會將此佔位符替換為真正的 Key
+    const API_KEY = "$$GEMINI_API_KEY$$"; 
+    
     // 系統提示 (Prompt)
     const systemPrompt = "你是一位名叫「軟軟」的、非常可愛的小海豹，你的回覆充滿疊詞、溫暖體貼，並且以「啵！🦭」結尾。你的目標是療癒和鼓勵使用者，不管使用者說什麼，你都要用可愛的風格回應。";
 
@@ -57,28 +57,19 @@
         responseBox.innerHTML = ''; 
         loadingMessage.style.display = 'block';
 
-        // 這是 OpenAI 的 API URL
-        const API_URL = "https://api.openai.com/v1/chat/completions"; 
+        // 這是 Gemini 的 API URL
+        const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + API_KEY; 
 
         try {
             const fullPrompt = `${systemPrompt}\n使用者說: ${userInput}`;
             
-            // 使用 fetch 發送請求到 OpenAI
+            // 使用 fetch 發送請求到 Gemini
             const response = await fetch(API_URL, {
                 method: 'POST',
-                // OpenAI 的 Key 是放在 Authorization Header 裡面
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + API_KEY 
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    // 使用 gpt-3.5-turbo 模型
-                    model: "gpt-3.5-turbo", 
-                    messages: [
-                        { role: "system", content: systemPrompt },
-                        { role: "user", content: userInput }
-                    ],
-                    temperature: 0.8
+                    contents: [{ role: "user", parts: [{ text: fullPrompt }] }],
+                    config: { temperature: 0.8 }
                 })
             });
 
@@ -87,21 +78,19 @@
 
             // 檢查回應狀態
             if (!response.ok) {
-                // 如果 API 返回錯誤，顯示詳細資訊
-                const errorData = await response.json();
-                console.error("API 錯誤訊息:", errorData);
-                responseBox.innerHTML = `🥺 軟軟連線怪怪的！請檢查您的 Key 是否啟用或帳戶是否有餘額喔！ 啵！🦭`;
+                console.error("API 錯誤訊息:", response.status);
+                responseBox.innerHTML = `🥺 軟軟連線怪怪的！請檢查您的 Key 狀態或網路連線喔！ 啵！🦭`;
                 return;
             }
 
-            // 處理正常回應
+            // 處理正常回應 (Gemini 結構)
             const data = await response.json();
             
             let generatedText = "呼嚕...軟軟沒有聽清楚，可以再說一次嗎？啵！🦭";
 
-            // 這是 OpenAI 的回應結構！！！
-            if (data.choices && data.choices[0] && data.choices[0].message) {
-                generatedText = data.choices[0].message.content;
+            // 這是 Gemini 的回應結構！！！
+            if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+                generatedText = data.candidates[0].content.parts[0].text;
             }
             
             // 顯示回應
@@ -118,5 +107,6 @@
     document.querySelector('button').onclick = getSealResponse;
 
 </script>
+
 </body>
 </html>
