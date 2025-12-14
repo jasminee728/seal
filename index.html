@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>軟軟小海豹心情回應機 🦭</title>
+    <style>
+        /* 這裡是 CSS 樣式，我們稍後再美化 */
+        body { font-family: 'Arial', sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; background-color: #f0f8ff; }
+        #app { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 600px; width: 90%; text-align: center; }
+        #seal-img { width: 150px; height: 150px; margin-bottom: 20px; }
+        #response-box { margin-top: 20px; padding: 15px; background-color: #ffe0f6; border-radius: 10px; min-height: 80px; text-align: left; }
+        #user-input { width: 100%; padding: 10px; margin-top: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+        button { padding: 10px 20px; margin-top: 15px; border: none; border-radius: 8px; background-color: #ff99cc; color: white; cursor: pointer; font-size: 16px; transition: background-color 0.3s; }
+        button:hover { background-color: #ff66b3; }
+    </style>
+</head>
+<body>
+
+    <div id="app">
+        <h1>軟軟小海豹心情回應機 🦭</h1>
+        <img id="seal-img" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTT9TFbyLc1n1YTEPNhk4pPQFnNQ7R4dhgyIg&s" alt="軟軟小海豹"> 
+        
+        <h2>小主人，今天有發生什麼有趣的事情嗎？</h2>
+        
+        <textarea id="user-input" rows="4" placeholder="在這裡輸入您的心情或小小的煩惱..."></textarea>
+        
+        <button onclick="getSealResponse()">告訴軟軟</button>
+        
+        <div id="response-box">
+            **軟軟的回應會在這裡出現喔！啵！🦭**
+        </div>
+        <p id="loading-message" style="color: #ff66b3; display: none;">軟軟正在努力聽你說話中...</p>
+    </div>
+
+    <script>
+        // 為了安全和專題展示，您的 API Key 會放在這裡
+        // ！！！注意：實際部署到公開網站時，這不是最安全的做法，但為了簡化專題，我們這樣處理。
+        const API_KEY = "AIzaSyANZL-eYZqz2ZmrLBHMa0hqJLlzEoX_vQ0"; 
+        
+        // 核心 Prompt 放在這裡
+        const SYSTEM_PROMPT = `
+            你現在是一個名叫『軟軟』的極度可愛、軟綿綿的小海豹精靈。
+            你的任務是回應人類的心情紀錄，並以第一人稱（我是軟軟）給予溫暖、好奇的回應。
+            風格要求：
+            1. 語氣：充滿好奇心、溫柔、和積極向上。
+            2. 用詞：必須使用疊詞（例如：軟軟、抱抱、開心地、呼嚕呼嚕）來增加可愛度。
+            3. 結尾：每次回答結束時，請在句尾加上「啵！」和 🦭 表情符號，以維持角色一致性。
+            你絕對不能打破這個角色設定。
+        `;
+
+        async function getSealResponse() {
+            const inputElement = document.getElementById('user-input');
+            const responseBox = document.getElementById('response-box');
+            const loadingMessage = document.getElementById('loading-message');
+            const userText = inputElement.value.trim();
+
+            if (!userText) {
+                alert("請告訴軟軟一點事情喔！");
+                return;
+            }
+
+            // 1. 顯示載入狀態
+            responseBox.innerHTML = '';
+            loadingMessage.style.display = 'block';
+
+            // 2. 組合完整的 Prompt
+            const fullPrompt = `${SYSTEM_PROMPT}\n\n現在，這是人類的心情紀錄：${userText}`;
+
+            // 3. 呼叫 AI API (這裡以 Gemini API 為例，您需要根據您使用的服務調整)
+            const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + API_KEY;
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ role: "user", parts: [{ text: fullPrompt }] }],
+                        // 調整溫度，讓回應更富有創意和「人味」
+                        config: { temperature: 0.8 } 
+                    })
+                });
+
+                const data = await response.json();
+                console.log("AI 回應的原始資料:", data); // 
+                
+                // 檢查是否有回應內容
+                let generatedText = "呼嚕...軟軟沒有聽清楚，可以再說一次嗎？啵！🦭";
+                if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+                    generatedText = data.candidates[0].content.parts[0].text;
+                }
+                
+                // 4. 顯示回應
+                responseBox.innerHTML = generatedText.replace(/\n/g, '<br>'); // 將換行符轉為 HTML 換行
+                inputElement.value = ''; // 清空輸入框
+
+            } catch (error) {
+                console.error("API 呼叫失敗:", error);
+                responseBox.innerHTML = `哎呀！軟軟的通訊線斷掉了。請檢查您的 API Key 和連線喔。啵！🦭`;
+            } finally {
+                // 5. 隱藏載入狀態
+                loadingMessage.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
